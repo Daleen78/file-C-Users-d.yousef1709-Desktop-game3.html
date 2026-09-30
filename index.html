@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لعبة صحتك والحاسوب التفاعلية - 10 مراحل (20 ثانية)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+        .large-text { font-size: 1.35rem; line-height: 1.8; }
+        .xlarge-text { font-size: 1.75rem; line-height: 2; }
+        
+        .drag-item { cursor: grab; touch-action: none; }
+        .drag-item:active { cursor: grabbing; }
+        .drop-zone.drag-over {
+            scale: 1.02;
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+        .bounce-anim { animation: bounce 1.8s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .pop-anim { animation: pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-2 sm:p-5 min-h-screen">
+
+    <!-- Container -->
+    <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-amber-300 w-full max-w-5xl p-4 sm:p-8 relative overflow-hidden my-auto">
+        
+        <!-- Top Navigation, Score & Timer Bar -->
+        <div id="topBar" class="hidden flex flex-wrap justify-between items-center bg-amber-100 rounded-2xl p-3 sm:p-4 mb-5 border-2 border-amber-300 gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <div class="bg-amber-400 text-amber-950 font-black px-4 py-2 rounded-xl text-lg sm:text-xl flex items-center gap-2 shadow">
+                    <i class="fa-solid fa-star text-yellow-100"></i>
+                    <span>النقاط: <span id="scoreText">0</span></span>
+                </div>
+                <div class="bg-purple-600 text-white font-extrabold px-4 py-2 rounded-xl text-md sm:text-lg shadow">
+                    المرحلة: <span id="stageText">1</span> / 10
+                </div>
+                <!-- Difficulty Level Badge -->
+                <div id="difficultyBadge" class="bg-emerald-500 text-white font-black px-3 py-1.5 rounded-xl text-sm sm:text-base shadow flex items-center gap-1">
+                    <i class="fa-solid fa-signal"></i>
+                    <span id="difficultyText">مستوى: مبتدئ</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Hint Button -->
+                <button id="hintBtn" onclick="useHint()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold px-3 py-2 rounded-xl text-sm sm:text-base shadow flex items-center gap-1 transition">
+                    <i class="fa-solid fa-lightbulb text-yellow-300"></i>
+                    <span>تلميح (<span id="hintsLeft">3</span>)</span>
+                </button>
+
+                <!-- Timer Bar (20 Seconds) -->
+                <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border-2 border-amber-300 shadow">
+                    <i class="fa-solid fa-clock text-rose-500 text-2xl"></i>
+                    <span id="timerText" class="text-2xl font-black text-rose-600 w-10 text-center">20</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. START SCREEN -->
+        <div id="startScreen" class="text-center py-4 sm:py-8">
+            <div class="inline-block bg-emerald-100 text-emerald-800 px-6 py-2 rounded-full font-extrabold text-xl sm:text-2xl mb-4 border-2 border-emerald-300">
+                🎓 مادة الحاسوب - الصف الرابع الابتدائي
+            </div>
+            <h1 class="text-3xl sm:text-6xl font-black text-emerald-600 mb-6 drop-shadow">
+                🌟 تحدي صحتك والحاسوب (10 مراحل) 🌟
+            </h1>
+            <p class="xlarge-text text-gray-700 font-extrabold mb-8 max-w-2xl mx-auto px-2">
+                أهلاً بكِ يا بطلة الحاسوب! تم إعداد **10 مراحل متدرجة** بتوقيت سريع **(20 ثانية لكل سؤال)** لتجربة تفاعلية مليئة بالحماس والتركيز!
+            </p>
+            
+            <div class="bg-amber-50 p-6 rounded-3xl border-3 border-amber-300 mb-8 max-w-xl mx-auto text-right shadow-sm">
+                <h3 class="font-black text-amber-900 text-2xl mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-stopwatch text-rose-500 text-3xl"></i> شروط التحدي السريع:
+                </h3>
+                <ul class="space-y-2 text-gray-800 font-bold large-text list-disc list-inside">
+                    <li>لديكِ <span class="text-rose-600 font-black">20 ثانية</span> فقط للإجابة على كل سؤال.</li>
+                    <li>المرحلة تتطلب السرعة والتركيز العالي.</li>
+                    <li>لديكِ <span class="text-indigo-600 font-black">3 تلميحات💡</span> مساعدة عند الحاجة.</li>
+                </ul>
+            </div>
+
+            <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-2xl sm:text-4xl px-12 py-5 rounded-3xl shadow-xl border-b-8 border-emerald-700 transition flex items-center gap-4 mx-auto bounce-anim cursor-pointer">
+                <span>ابدأي التحدي السريع</span>
+                <i class="fa-solid fa-circle-play"></i>
+            </button>
+        </div>
+
+        <!-- 2. GAMEPLAY SCREEN -->
+        <div id="gameplayScreen" class="hidden">
+            <!-- Question Box -->
+            <div class="mb-5 bg-blue-50 p-4 sm:p-6 rounded-3xl border-3 border-blue-200 shadow-sm">
+                <div class="flex justify-between items-center mb-1">
+                    <span id="badgeDifficultyLevel" class="text-xs sm:text-sm font-black px-3 py-1 rounded-lg bg-emerald-200 text-emerald-800">مستوى سهل</span>
+                    <span id="hintBox" class="hidden text-sm sm:text-base font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-lg"></span>
+                </div>
+                <h2 id="questionTitle" class="text-2xl sm:text-4xl font-black text-blue-900 mb-2 leading-tight">
+                    <!-- Title Injected -->
+                </h2>
+                <p id="questionSubtitle" class="text-lg sm:text-2xl text-blue-700 font-bold">
+                    <!-- Instructions -->
+                </p>
+            </div>
+
+            <!-- Dynamic Interactive Area -->
+            <div id="questionContainer" class="min-h-[300px] flex items-center justify-center">
+                <!-- Injected elements per stage -->
+            </div>
+
+            <!-- Feedback Modal -->
+            <div id="feedbackModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div id="feedbackContent" class="bg-white rounded-3xl p-6 sm:p-10 text-center max-w-lg w-full border-8 shadow-2xl pop-anim">
+                    <div id="feedbackIcon" class="text-7xl sm:text-8xl mb-3"></div>
+                    <h3 id="feedbackTitle" class="text-3xl sm:text-4xl font-black mb-4"></h3>
+                    <p id="feedbackText" class="xlarge-text font-bold text-gray-700 mb-8 leading-relaxed"></p>
+                    <button onclick="nextStage()" class="bg-blue-500 hover:bg-blue-600 text-white font-black text-2xl sm:text-3xl px-10 py-4 rounded-2xl shadow-lg border-b-6 border-blue-700 transition active:scale-95 cursor-pointer">
+                        المرحلة التالية ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. END SCREEN -->
+        <div id="endScreen" class="hidden text-center py-6 sm:py-10">
+            <div id="endBadgeIcon" class="text-8xl mb-4 bounce-anim">🏆</div>
+            <h1 class="text-4xl sm:text-6xl font-black text-amber-500 mb-3">نتيجة التحدي النهائي!</h1>
+            <p class="xlarge-text text-gray-700 font-extrabold mb-6">أكملتِ جميع الأسئلة العشرة بنجاح!</p>
+            
+            <div class="bg-gradient-to-r from-amber-100 to-yellow-100 border-4 border-amber-300 rounded-3xl p-6 max-w-md mx-auto mb-8 shadow-md">
+                <span class="text-xl sm:text-2xl font-black text-amber-900 block mb-2">مجموع النقاط النهائي</span>
+                <span id="finalScore" class="text-6xl sm:text-7xl font-black text-amber-600">0</span>
+                <span class="text-2xl font-black text-amber-900"> / 100</span>
+                <p id="finalMessage" class="mt-4 text-xl font-bold text-emerald-800 bg-white p-3 rounded-2xl border border-amber-300 shadow-sm">
+                    <!-- Dynamic Feedback -->
+                </p>
+            </div>
+
+            <button onclick="restartGame()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-2xl sm:text-3xl px-10 py-5 rounded-3xl shadow-xl border-b-8 border-emerald-700 transition flex items-center gap-3 mx-auto cursor-pointer">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>إعادة التحدي</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Sound Effects System (No Background Music) -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.setValueAtTime(180, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'click') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(450, now);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'win') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const oscNote = audioCtx.createOscillator();
+                    const gainNote = audioCtx.createGain();
+                    oscNote.connect(gainNote);
+                    gainNote.connect(audioCtx.destination);
+                    oscNote.frequency.value = freq;
+                    gainNote.gain.setValueAtTime(0.2, now + idx * 0.12);
+                    gainNote.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
+                    oscNote.start(now + idx * 0.12);
+                    oscNote.stop(now + idx * 0.12 + 0.3);
+                });
+            }
+        }
+
+        // 10 Stages Data with 20 seconds time limit
+        const stages = [
+            {
+                title: "المرحلة 1: استقامة الظهر 🪑",
+                subtitle: "هل العبارة التالية صحيحة أم خاطئة؟",
+                type: "true-false",
+                difficulty: "مبتدئ (سهل جداً)",
+                diffColor: "bg-emerald-200 text-emerald-900",
+                timeLimit: 20,
+                hint: "الظهر المستقيم المدعوم يمنع حدوث الآلام والمشكلات الصحية.",
+                question: "يجب إبقاء الظهر مستقيماً ومستنداً على ظهر الكرسي عند الجلوس أمام الحاسوب.",
+                correct: true,
+                explanation: "أحسنتِ! الجلسة المستقيمة تحمي ظهركِ وعمودكِ الفقري من التعب."
+            },
+            {
+                title: "المرحلة 2: إراحة العينين 👁️",
+                subtitle: "اختاري السلوك الصحي لإراحة العينين عند استخدام الشاشات:",
+                type: "choice",
+                difficulty: "مبتدئ (سهل)",
+                diffColor: "bg-emerald-200 text-emerald-900",
+                timeLimit: 20,
+                hint: "ابحثي عن الخيار الذي يتضمن أخذ استراحات والنظر بعيداً.",
+                options: [
+                    { text: "أخذ استراحات قصيرة والتحديق بعيداً بانتظام", isCorrect: true },
+                    { text: "التركيز دون إغماض العينين ساعتين متواصلتين", isCorrect: false },
+                    { text: "تقريب الشاشة جداً من وجهكِ أثناء اللعب", isCorrect: false }
+                ],
+                explanation: "ممتازة! إراحة العينين تمنع الجفاف والإرهاق البصري."
+            },
+            {
+                title: "المرحلة 3: تصنيف الجلسة والإضاءة 🧺",
+                subtitle: "اسحبي البطاقة للمكان الصحيح (سلوك صحي / سلوك خاطئ):",
+                type: "drag-drop-category",
+                difficulty: "سهل - متوسط",
+                diffColor: "bg-emerald-300 text-emerald-950",
+                timeLimit: 20,
+                hint: "الإضاءة المظلمة وضغط المعصم تعتبر تصرفات غير صحية.",
+                items: [
+                    { id: 1, text: "العمل في غرفة ذات إضاءة مناسبة", category: "correct" },
+                    { id: 2, text: "إطفاء أنوار الغرفة بالكامل واللعب بالظلام", category: "wrong" }
+                ],
+                explanation: "رائعة! الإضاءة الساطعة الموزعة تمنع إجهاد العينين."
+            },
+            {
+                title: "المرحلة 4: وضعية اليدين والمعصم ⌨️",
+                subtitle: "هل العبارة التالية صحيحة أم خاطئة؟",
+                type: "true-false",
+                difficulty: "متوسط",
+                diffColor: "bg-blue-200 text-blue-900",
+                timeLimit: 20,
+                hint: "انحناء المعصم بزاوية حادة يسبب ألاماً بالمفاصل.",
+                question: "يجب إبقاء اليدين والمعصمين بوضعية مستقيمة وغير منثنية أثناء الكتابة.",
+                correct: true,
+                explanation: "صحيح! استقامة المعصمين تحمي الأعصاب والمفاصل من الإجهاد."
+            },
+            {
+                title: "المرحلة 5: استراحة القدمين والساقين 🦶",
+                subtitle: "ما الوضعية الصحيحة للقدمين عند الجلوس على كرسي الحاسوب؟",
+                type: "choice",
+                difficulty: "متوسط",
+                diffColor: "bg-blue-200 text-blue-900",
+                timeLimit: 20,
+                hint: "يجب ألا تظل القدمان معلقتين في الهواء بدون مسند.",
+                options: [
+                    { text: "استقرار القدمين مسطحتين تماماً على الأرض أو مسند القدمين", isCorrect: true },
+                    { text: "ترك القدمين معلقتين في الهواء دون الاستناد على شيء", isCorrect: false },
+                    { text: "الجلوس وطي الساقين أسفل الكرسي لشد العضلات", isCorrect: false }
+                ],
+                explanation: "ممتازة! استناد القدمين يضمن سريان الدورة الدموية بشكل مريح."
+            },
+            {
+                title: "المرحلة 6: الشاشة والمسافة الآمنة 🖥️",
+                subtitle: "صنفي الوضعيات التالية بناءً على سلامة العين والجسم:",
+                type: "drag-drop-category",
+                difficulty: "متوسط مرتفع",
+                diffColor: "bg-yellow-200 text-yellow-900",
+                timeLimit: 20,
+                hint: "يجب أن تكون الشاشة على بعد ذراع ومستوى العينين أو أسفل قليلاً.",
+                items: [
+                    { id: 1, text: "جعل الشاشة على بعد طول ذراع تقريباً", category: "correct" },
+                    { id: 2, text: "رفع الشاشة عالياً جداً أعلى من مستوى الرأس", category: "wrong" },
+                    { id: 3, text: "خفض الشاشة لدرجة انحناء الرقبـة الكلي", category: "wrong" }
+                ],
+                explanation: "بارعة! البعد المناسب ومستوى النظر يمنعان آلام الرقبة والعين."
+            },
+            {
+                title: "المرحلة 7: قاعدة (20 - 20 - 20) الشهيرة 👁️✨",
+                subtitle: "طابقي الأرقام والعبارات لإكمال عناصر القاعدة الصحية لإراحة العين:",
+                type: "order-matching",
+                difficulty: "متقدم",
+                diffColor: "bg-orange-200 text-orange-900",
+                timeLimit: 20,
+                hint: "تذكري: 20 دقيقة، 20 ثانية، و 20 قدمًا.",
+                options: [
+                    { label: "كل كم دقيقة تأخذين استراحة؟", val: "20 دقيقة" },
+                    { label: "كم مدة النظر بعيداً عن الشاشة؟", val: "20 ثانية" },
+                    { label: "كم مسافة الهدف الذي تنظرين إليه؟", val: "20 قدمًا" }
+                ],
+                choices: ["20 ثانية", "20 قدمًا", "20 دقيقة"],
+                correctAnswers: { 0: "20 دقيقة", 1: "20 ثانية", 2: "20 قدمًا" },
+                explanation: "ذكية جداً! هذه القاعدة هي السر الموصى به عالمياً لحماية العينين."
+            },
+            {
+                title: "المرحلة 8: الصحة الاجتماعية والتوازن 🤝",
+                subtitle: "كيف تحافظين على علاقاتكِ الاجتماعية مع الأهل وتتجنبين العزلة؟",
+                type: "choice",
+                difficulty: "متقدم",
+                diffColor: "bg-orange-200 text-orange-900",
+                timeLimit: 20,
+                hint: "التوازن والجلوس مع الأسرة يمنع العزلة الإلكترونية.",
+                options: [
+                    { text: "تحديد وقت محدد للشاشة والمشاركة في الأنشطة العائلية", isCorrect: true },
+                    { text: "اللعب بالألعاب الإلكترونية طوال اليوم في الغرفة", isCorrect: false },
+                    { text: "تصفح الجوال أثناء تناول وجبات الطعام مع العائلة", isCorrect: false }
+                ],
+                explanation: "رائعة! التوازن الاجتماعي يضمن صحتكِ النفسية والبدنية."
+            },
+            {
+                title: "المرحلة 9: أضرار السهر والاستخدام المفرط 🌙",
+                subtitle: "هل العبارة التالية صحيحة أم خاطئة؟",
+                type: "true-false",
+                difficulty: "تحدي الخبراء",
+                diffColor: "bg-rose-200 text-rose-900",
+                timeLimit: 20,
+                hint: "الضوء الأزرق للشاشات ليلاً يسبب الأرق وقلة النوم.",
+                question: "استخدام الألعاب الإلكترونية قبل النوم مباشرة يساعد على النوم العميق والسريع.",
+                correct: false,
+                explanation: "إجابة ممتازة! إضاءة الشاشات قبل النوم تسبب الأرق واضطراب النوم."
+            },
+            {
+                title: "المرحلة 10: تحدي الخبراء والسيناريو الشامل 👑🧠",
+                subtitle: "لاحظتِ أن صديقتكِ تعاني من ألم بالظهر، إجهاد بالعين، وعزلة. ما النصحية الشاملة لها؟",
+                type: "choice",
+                difficulty: "تحدي الخبراء (متقدم)",
+                diffColor: "bg-purple-200 text-purple-900",
+                timeLimit: 20,
+                hint: "اختاري النصيحة الشاملة التي تجمع الجلسة السليمة والاستراحة والتواصل الاجتماعي.",
+                options: [
+                    { text: "ضبط جلسة الظهر، تطبيق قاعدة 20-20-20، وتحديد جدول زمني محدد للشاشات", isCorrect: true },
+                    { text: "شراء شاشة أكبر فقط ومواصلة اللعب دون توقف", isCorrect: false },
+                    { text: "إغلاق أنوار الغرفة لترتاح عينها أثناء اللعب", isCorrect: false }
+                ],
+                explanation: "مذهلة وأستاذة خبيرة! لقد أتقنتِ جميع معايير ومفاهيم (صحتك والحاسوب) ببراعة عالية!"
+            }
+        ];
+
+        // Global State Variables
+        let currentStage = 0;
+        let score = 0;
+        let timer = null;
+        let timeLeft = 20;
+        let hintsLeft = 3;
+        let selectedItems = {};
+
+        function startGame() {
+            playSound('click');
+            currentStage = 0;
+            score = 0;
+            hintsLeft = 3;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('topBar').classList.remove('hidden');
+            document.getElementById('gameplayScreen').classList.remove('hidden');
+            document.getElementById('hintsLeft').innerText = hintsLeft;
+            loadStage();
+        }
+
+        function loadStage() {
+            document.getElementById('scoreText').innerText = score;
+            document.getElementById('stageText').innerText = currentStage + 1;
+            document.getElementById('hintBox').classList.add('hidden');
+            
+            const stage = stages[currentStage];
+            document.getElementById('questionTitle').innerText = stage.title;
+            document.getElementById('questionSubtitle').innerText = stage.subtitle;
+
+            // Update difficulty badge UI
+            const diffBadge = document.getElementById('difficultyBadge');
+            document.getElementById('difficultyText').innerText = `مستوى: ${stage.difficulty}`;
+            const badgeLevel = document.getElementById('badgeDifficultyLevel');
+            badgeLevel.innerText = stage.difficulty;
+            badgeLevel.className = `text-xs sm:text-sm font-black px-3 py-1 rounded-lg ${stage.diffColor}`;
+
+            // Reset Timer to 20 seconds
+            clearInterval(timer);
+            timeLeft = stage.timeLimit;
+            document.getElementById('timerText').innerText = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerText').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    showFeedback(false, "انتهى الوقت المحدد للمرحلة (20 ثانية)! حاولي الإجابة بتركيز وسرعة في المرة القادمة.");
+                }
+            }, 1000);
+
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = '';
+
+            if (stage.type === 'true-false') {
+                renderTrueFalse(stage, container);
+            } else if (stage.type === 'drag-drop-category') {
+                renderDragDropCategory(stage, container);
+            } else if (stage.type === 'order-matching') {
+                renderOrderMatching(stage, container);
+            } else if (stage.type === 'choice') {
+                renderChoiceStage(stage, container);
+            }
+        }
+
+        function useHint() {
+            if (hintsLeft > 0) {
+                playSound('click');
+                hintsLeft--;
+                document.getElementById('hintsLeft').innerText = hintsLeft;
+                const hintBox = document.getElementById('hintBox');
+                hintBox.innerText = `💡 تلميح: ${stages[currentStage].hint}`;
+                hintBox.classList.remove('hidden');
+                if (hintsLeft === 0) {
+                    document.getElementById('hintBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                alert("لقد استهلكتِ جميع التلميحات المتاحة!");
+            }
+        }
+
+        // Render True/False Stage
+        function renderTrueFalse(stage, container) {
+            const html = `
+                <div class="w-full flex flex-col items-center gap-6">
+                    <div class="bg-amber-50 p-6 rounded-3xl border-3 border-amber-300 text-center w-full">
+                        <p class="font-black text-2xl sm:text-3xl text-amber-900">${stage.question}</p>
+                    </div>
+                    <div class="flex gap-4 w-full max-w-md">
+                        <button onclick="checkTrueFalse(true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-3xl py-5 rounded-2xl shadow-lg border-b-6 border-emerald-700 transition cursor-pointer flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check-circle"></i> صح
+                        </button>
+                        <button onclick="checkTrueFalse(false)" class="flex-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-black text-3xl py-5 rounded-2xl shadow-lg border-b-6 border-rose-700 transition cursor-pointer flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-times-circle"></i> خطأ
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function checkTrueFalse(userChoice) {
+            const stage = stages[currentStage];
+            const isCorrect = userChoice === stage.correct;
+            showFeedback(isCorrect, stage.explanation);
+        }
+
+        // Render Drag and Drop Stage
+        function renderDragDropCategory(stage, container) {
+            selectedItems = {};
+            const html = `
+                <div class="w-full flex flex-col gap-6">
+                    <div class="bg-amber-50 p-4 rounded-3xl border-2 border-amber-300 flex flex-wrap justify-center gap-3 min-h-[90px]" id="sourceBox">
+                        ${stage.items.map(item => `
+                            <div draggable="true" ondragstart="handleDragStart(event, ${item.id})" id="drag-${item.id}" 
+                                class="drag-item bg-white text-gray-900 font-extrabold large-text p-4 rounded-2xl border-3 border-amber-400 shadow-md hover:scale-105 transition flex items-center gap-2">
+                                <i class="fa-solid fa-grip-vertical text-amber-500"></i> ${item.text}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'correct')" 
+                            class="drop-zone bg-emerald-50 border-4 border-dashed border-emerald-400 rounded-3xl p-4 min-h-[160px] flex flex-col items-center">
+                            <h4 class="text-emerald-800 font-black text-2xl mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> سلوك صحي
+                            </h4>
+                            <div id="zone-correct" class="w-full flex flex-col gap-2"></div>
+                        </div>
+
+                        <div ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'wrong')" 
+                            class="drop-zone bg-rose-50 border-4 border-dashed border-rose-400 rounded-3xl p-4 min-h-[160px] flex flex-col items-center">
+                            <h4 class="text-rose-800 font-black text-2xl mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-xmark text-rose-600"></i> سلوك خاطئ
+                            </h4>
+                            <div id="zone-wrong" class="w-full flex flex-col gap-2"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="checkDragDropCategory()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-2xl py-4 px-10 rounded-2xl shadow-lg border-b-6 border-emerald-700 mx-auto transition active:scale-95 cursor-pointer">
+                        تأكيد الإجابات 🎯
+                    </button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        let draggedItemId = null;
+        function handleDragStart(e, id) {
+            draggedItemId = id;
+            e.dataTransfer.setData('text/plain', id);
+            playSound('click');
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+        function handleDrop(e, category) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            if (draggedItemId) {
+                const elem = document.getElementById(`drag-${draggedItemId}`);
+                if (elem) {
+                    document.getElementById(`zone-${category}`).appendChild(elem);
+                    selectedItems[draggedItemId] = category;
+                    playSound('click');
+                }
+            }
+        }
+
+        function checkDragDropCategory() {
+            const stage = stages[currentStage];
+            if (Object.keys(selectedItems).length < stage.items.length) {
+                alert("لطفاً اسحبي جميع العبارات للسلل المناسبة أولاً!");
+                return;
+            }
+            let correct = true;
+            stage.items.forEach(item => {
+                if (selectedItems[item.id] !== item.category) {
+                    correct = false;
+                }
+            });
+            showFeedback(correct, stage.explanation);
+        }
+
+        // Render Matching Stage
+        function renderOrderMatching(stage, container) {
+            selectedItems = {};
+            const html = `
+                <div class="w-full flex flex-col gap-6">
+                    <div class="grid grid-cols-1 gap-4">
+                        ${stage.options.map((opt, idx) => `
+                            <div class="bg-amber-50 p-4 sm:p-5 rounded-3xl border-3 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <span class="font-black text-amber-900 large-text">${opt.label}:</span>
+                                <div class="flex gap-2 flex-wrap justify-center">
+                                    ${stage.choices.map(choice => `
+                                        <button onclick="selectMatch(${idx}, '${choice}', this)" 
+                                            class="match-btn-${idx} bg-white hover:bg-amber-200 text-gray-800 font-extrabold px-5 py-3 rounded-2xl border-2 border-amber-400 large-text transition cursor-pointer">
+                                            ${choice}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button onclick="checkOrderMatching()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-2xl py-4 px-10 rounded-2xl shadow-lg border-b-6 border-emerald-700 mx-auto transition active:scale-95 cursor-pointer">
+                        تحقق من الحل 🎯
+                    </button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function selectMatch(optionIndex, value, btnElem) {
+            playSound('click');
+            selectedItems[optionIndex] = value;
+            document.querySelectorAll(`.match-btn-${optionIndex}`).forEach(btn => {
+                btn.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-600');
+                btn.classList.add('bg-white', 'text-gray-800');
+            });
+            btnElem.classList.remove('bg-white', 'text-gray-800');
+            btnElem.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600');
+        }
+
+        function checkOrderMatching() {
+            const stage = stages[currentStage];
+            if (Object.keys(selectedItems).length < stage.options.length) {
+                alert("لطفاً اختاري إجابة لكل العبارات الموضحة!");
+                return;
+            }
+            let correct = true;
+            for (let idx in stage.correctAnswers) {
+                if (selectedItems[idx] !== stage.correctAnswers[idx]) {
+                    correct = false;
+                }
+            }
+            showFeedback(correct, stage.explanation);
+        }
+
+        // Render Multiple Choice Stage
+        function renderChoiceStage(stage, container) {
+            const html = `
+                <div class="grid grid-cols-1 gap-4 w-full">
+                    ${stage.options.map((opt, idx) => `
+                        <button onclick="checkChoice(${opt.isCorrect})" 
+                            class="bg-white hover:bg-blue-50 active:scale-98 text-right font-extrabold large-text p-5 rounded-3xl border-3 border-blue-200 hover:border-blue-400 shadow-md transition flex items-center gap-4 text-gray-800 cursor-pointer">
+                            <span class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-black text-2xl shrink-0">${idx + 1}</span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function checkChoice(isCorrect) {
+            const stage = stages[currentStage];
+            showFeedback(isCorrect, stage.explanation);
+        }
+
+        // Feedback Modal
+        function showFeedback(isCorrect, explanation) {
+            clearInterval(timer);
+            const modal = document.getElementById('feedbackModal');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const text = document.getElementById('feedbackText');
+            const content = document.getElementById('feedbackContent');
+
+            if (isCorrect) {
+                playSound('correct');
+                score += 10;
+                icon.innerHTML = "🎉✨";
+                title.innerText = "إجابة صحيحة وممتازة!";
+                title.className = "text-3xl sm:text-4xl font-black mb-3 text-emerald-600";
+                content.className = "bg-white rounded-3xl p-6 sm:p-10 text-center max-w-lg w-full border-8 border-emerald-400 shadow-2xl pop-anim";
+            } else {
+                playSound('wrong');
+                icon.innerHTML = "💡💪";
+                title.innerText = "حاولي مرة أخرى يا بطلة!";
+                title.className = "text-3xl sm:text-4xl font-black mb-3 text-rose-600";
+                content.className = "bg-white rounded-3xl p-6 sm:p-10 text-center max-w-lg w-full border-8 border-rose-400 shadow-2xl pop-anim";
+            }
+
+            text.innerText = explanation;
+            modal.classList.remove('hidden');
+        }
+
+        function nextStage() {
+            playSound('click');
+            document.getElementById('feedbackModal').classList.add('hidden');
+            currentStage++;
+            if (currentStage < stages.length) {
+                loadStage();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        // End Screen with Differential Assessment
+        function showEndScreen() {
+            playSound('win');
+            document.getElementById('gameplayScreen').classList.add('hidden');
+            document.getElementById('topBar').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = score;
+
+            const msgElem = document.getElementById('finalMessage');
+            const iconElem = document.getElementById('endBadgeIcon');
+
+            if (score === 100) {
+                iconElem.innerText = "👑";
+                msgElem.innerText = "🌟 أداء أسطوري ودرجة كاملة! تخطيتِ الأسئلة العشرة بنجاح واقتدار!";
+            } else if (score >= 70) {
+                iconElem.innerText = "🏆";
+                msgElem.innerText = "👏 أداء رائع جداً وممتاز! لديكِ معرفة صحية وتقنية متقدمة للغاية.";
+            } else if (score >= 50) {
+                iconElem.innerText = "👍";
+                msgElem.innerText = "🌱 بداية جيدة ومحاولة طيبة! يمكنكِ إعادة التحدي والوصول للدرجة الكاملة.";
+            } else {
+                iconElem.innerText = "💡";
+                msgElem.innerText = "💪 واصلي المحاولة! يمكنكِ الاستعانة بالتلميحات وإعادة التحدي للتعلم والتميز.";
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>
